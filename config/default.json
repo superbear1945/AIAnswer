@@ -1,0 +1,46 @@
+{
+  "asr": {
+    "provider": "xunfei",
+    "app_id": "",
+    "api_key": "",
+    "api_secret": "",
+    "api_base": "https://api.openai.com/v1",
+    "model": "whisper-1",
+    "language": "zh",
+    "segment_duration_ms": 1500
+  },
+  "llm": {
+    "api_base": "https://api.openai.com/v1",
+    "api_key": "",
+    "model": "gpt-4o-mini",
+    "system_prompt": "回答该提问，口语化并简短精炼",
+    "max_tokens": 150,
+    "temperature": 0.7
+  },
+  "audio": {
+    "sample_rate": 16000,
+    "chunk_duration_ms": 200,
+    "device_index": null
+  },
+  "detector": {
+    "triggers": [
+      "问个问题",
+      "请一位同学",
+      "谁来回答",
+      "怎么看",
+      "有什么想法",
+      "思考一下",
+      "对吗",
+      "是不是",
+      "请回答",
+      "哪位同学",
+      "你的观点",
+      "如何理解",
+      "怎么看待",
+      "有什么见解",
+      "举例说明",
+      "举例来讲"
+    ],
+    "cooldown_seconds": 5.0
+  }
+}
