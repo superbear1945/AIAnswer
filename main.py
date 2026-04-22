@@ -26,10 +26,12 @@ logger = setup_logger("AIAnswer.main")
 class AppController:
     def __init__(self):
         self.config = ConfigManager()
+        self._finish_event = threading.Event()
         self.ui = MainWindow(
             on_start=self.on_start,
             on_stop=self.on_stop,
             on_settings=self.on_settings,
+            on_finish_question=self.on_finish_question,
         )
         self._async_loop: asyncio.AbstractEventLoop = None
         self._async_thread: threading.Thread = None
@@ -61,6 +63,13 @@ class AppController:
         SettingsDialog(self.ui.root, self.config, save_handler)
 
     # ------------------------------------------------------------------ #
+    # 结束提问按钮回调
+    # ------------------------------------------------------------------ #
+    def on_finish_question(self):
+        if self._detector:
+            self._detector.confirm_and_send()
+
+    # ------------------------------------------------------------------ #
     # 开始听课
     # ------------------------------------------------------------------ #
     def on_start(self):
@@ -70,6 +79,7 @@ class AppController:
             return
 
         self._running = True
+        self._finish_event.clear()
         self.ui.set_running(True)
         self.ui.set_status("正在启动...")
 
@@ -123,6 +133,7 @@ class AppController:
         asr_ui_q = asyncio.Queue(maxsize=100)
         trigger_q = asyncio.Queue(maxsize=10)
         llm_output_q = asyncio.Queue(maxsize=100)
+        notify_q = asyncio.Queue(maxsize=10)
 
         self._audio_capture = AudioCapture(
             queue=audio_q,
@@ -157,9 +168,10 @@ class AppController:
         self._detector = TriggerDetector(
             text_queue=asr_text_q,
             trigger_queue=trigger_q,
+            notify_queue=notify_q,
+            finish_event=self._finish_event,
             triggers=self.config.get("detector.triggers"),
             cooldown_seconds=self.config.get("detector.cooldown_seconds", 5.0),
-            wait_seconds=self.config.get("detector.wait_seconds", 3.0),
         )
         self._llm = LLMClient(
             trigger_queue=trigger_q,
@@ -174,12 +186,20 @@ class AppController:
             temperature=self.config.get("llm.temperature", 0.7),
         )
 
-        # 桥接：把 asyncio 侧的 LLM 输出和 ASR UI 输出搬运到 tkinter 队列
+        # 桥接：把 asyncio 侧的队列数据搬运到 tkinter 队列
         async def bridge():
             while self._running:
-                # LLM 输出（高优先级，先检查）
+                # LLM 输出（高优先级）
                 try:
                     msg = llm_output_q.get_nowait()
+                    self._tk_queue.put(msg)
+                    continue
+                except asyncio.QueueEmpty:
+                    pass
+
+                # 检测器通知（提问检测/发送确认）
+                try:
+                    msg = notify_q.get_nowait()
                     self._tk_queue.put(msg)
                     continue
                 except asyncio.QueueEmpty:

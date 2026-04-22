@@ -30,7 +30,6 @@ class TextBuffer:
         text = self.get_text()
         if not text:
             return ""
-        # 保留中文及常见标点，按句子结束符分割
         parts = re.split(r"([。！？.!?])", text)
         sentences = []
         i = 0
@@ -45,6 +44,21 @@ class TextBuffer:
         if not sentences:
             return text
         return "".join(sentences[-tail_sentences:])
+
+    def get_context_from_trigger(self, trigger: str) -> str:
+        """从触发词出现位置开始，截取到文本末尾作为完整提问上下文。
+
+        如果触发词在文本中多次出现，取最后（最右）一次的位置。
+        如果触发词不在当前文本中（流式修正导致消失），回退返回全部文本。
+        如果文本为空或已过期，返回空字符串。
+        """
+        text = self.get_text()
+        if not text:
+            return ""
+        idx = text.rfind(trigger)
+        if idx < 0:
+            return text
+        return text[idx:]
 
     def clear(self) -> None:
         self._text = ""
