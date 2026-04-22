@@ -95,7 +95,9 @@ class AppController:
             missing.append("LLM API Key")
 
         if missing:
-            msg = "以下配置项未填写，请先点击「设置」完成配置：\n\n" + "\n".join(missing)
+            msg = "以下配置项未填写，请先点击「设置」完成配置：\n\n" + "\n".join(
+                missing
+            )
             messagebox.showerror("配置不完整", msg)
             return False
         return True
@@ -157,6 +159,7 @@ class AppController:
             trigger_queue=trigger_q,
             triggers=self.config.get("detector.triggers"),
             cooldown_seconds=self.config.get("detector.cooldown_seconds", 5.0),
+            wait_seconds=self.config.get("detector.wait_seconds", 3.0),
         )
         self._llm = LLMClient(
             trigger_queue=trigger_q,
@@ -202,9 +205,7 @@ class AppController:
 
         self._tk_queue.put({"type": "status", "content": "运行中 | 正在监听..."})
 
-        done, pending = await asyncio.wait(
-            tasks, return_when=asyncio.FIRST_COMPLETED
-        )
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         for t in pending:
             t.cancel()
         if pending:
@@ -227,9 +228,7 @@ class AppController:
         self.ui.set_status("正在停止...")
 
         if self._async_loop and self._async_loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                self._do_stop(), self._async_loop
-            )
+            future = asyncio.run_coroutine_threadsafe(self._do_stop(), self._async_loop)
             try:
                 future.result(timeout=5)
             except Exception as exc:

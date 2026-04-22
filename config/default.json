@@ -41,6 +41,7 @@
       "举例说明",
       "举例来讲"
     ],
-    "cooldown_seconds": 5.0
+    "cooldown_seconds": 5.0,
+    "wait_seconds": 3.0
   }
 }
