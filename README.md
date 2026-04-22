@@ -6,6 +6,9 @@
 
 ---
 
+## 注: 使用时需要将config/user.json.example后的.example去掉，改名为user.json再填写密钥等内容
+## 若不知道在哪里获得讯飞相关功能，可以查看"使用说明.md"的 5.首次配置向导 
+
 ## 功能特点
 
 - **实时语音转文字**：支持讯飞 WebSocket 流式识别，也支持直接对接兼容 `/audio/transcriptions` 的语音转写 API。
